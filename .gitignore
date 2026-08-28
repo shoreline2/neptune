@@ -1,0 +1,25 @@
+# Local Terraform state & history
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Terraform sensitive variable files
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Local .terraform working directories
+.terraform/
+
+# CLI & Local Execution Artifacts
+.terraform.lock.hcl.bak
+manual-argo-install.md
+
+# General OS & Editor metadata
+.DS_Store
+.idea/
+.vscode/
