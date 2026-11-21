@@ -21,9 +21,6 @@ spec:
     server: https://kubernetes.default.svc
     namespace: cert-manager
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
     syncOptions:
       - SkipDryRunOnMissingResource=true
     # cert-manager's CRDs may not exist yet on first sync
