@@ -33,5 +33,6 @@ The A1 quota is fully used by the node, so a replacement cannot be created until
 
 ## Gotchas
 
+- The first launch attempts for the replacement fail with `QuotaExceeded`, because the old node still counts against the A1 quota while it terminates. OKE retries on its own, and a later attempt succeeds. The failed work requests are harmless.
 - Pods stay `Pending` until the new node is `Ready`. Argo CD, the certificate, and Secrets live in the control plane, so everything comes back without intervention.
 - Block volumes reattach to the new node automatically, because it is in the same availability domain.
