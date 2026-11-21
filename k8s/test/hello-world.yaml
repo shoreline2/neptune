@@ -47,7 +47,7 @@ spec:
   parentRefs:
     - name: main-gateway
       namespace: default
-      sectionName: https-wildcard
+      sectionName: https
   hostnames:
     - test.neptune-mgmt.duckdns.org
   rules:

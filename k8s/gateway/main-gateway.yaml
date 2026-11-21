@@ -12,21 +12,9 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-    # A wildcard listener hostname does not match the apex, so each needs its own listener.
-    - name: https-apex
+    - name: https
       protocol: HTTPS
       port: 443
-      hostname: neptune-mgmt.duckdns.org
-      tls:
-        certificateRefs:
-          - name: neptune-mgmt-tls
-      allowedRoutes:
-        namespaces:
-          from: All
-    - name: https-wildcard
-      protocol: HTTPS
-      port: 443
-      hostname: "*.neptune-mgmt.duckdns.org"
       tls:
         certificateRefs:
           - name: neptune-mgmt-tls
