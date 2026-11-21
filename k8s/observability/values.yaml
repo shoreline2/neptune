@@ -1,0 +1,4 @@
+grafana:
+  admin:
+    # Manually created, see docs/grafana.md
+    existingSecret: grafana-admin

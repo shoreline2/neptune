@@ -7,10 +7,16 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  source:
-    chart: kube-prometheus-stack
-    repoURL: oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack
-    targetRevision: 93.6.1
+  sources:
+    - chart: kube-prometheus-stack
+      repoURL: oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack
+      targetRevision: 93.6.1
+      helm:
+        valueFiles:
+          - $values/k8s/observability/values.yaml
+    - repoURL: 'https://github.com/shoreline2/neptune.git'
+      targetRevision: HEAD
+      ref: values
   destination:
       server: https://kubernetes.default.svc
       namespace: observability
