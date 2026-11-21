@@ -22,6 +22,9 @@ resource "oci_limits_quota" "free_tier" {
 
     # Block storage (boot volumes + PVCs share this)
     "set block-storage quota total-storage-gb to 200 in tenancy",
+    # Free tier: 2 block volumes (boot volumes not included) and 5 backups
+    "set block-storage quota volume-count to 2 in tenancy",
+    "set block-storage quota backup-count to 5 in tenancy",
 
     # One 10 Mbps flexible load balancer
     "zero load-balancer quotas in tenancy",
