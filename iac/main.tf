@@ -220,6 +220,6 @@ output "node_image" {
   value = local.node_image_name
 }
 
-output "kubeconfig_command" {
-  value = "oci ce cluster create-kubeconfig --cluster-id ${oci_containerengine_cluster.k8s_cluster.id} --file ~/.kube/config --region ${var.region} --token-version 2.0.0 --kube-endpoint PUBLIC_ENDPOINT"
+output "cluster_id" {
+  value = oci_containerengine_cluster.k8s_cluster.id
 }
