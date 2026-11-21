@@ -21,8 +21,8 @@ grafana:
 prometheus:
   prometheusSpec:
     retention: 30d
-    # Shares the volume with other apps, so cap well below 50 GB
-    retentionSize: 22GB
+    # Shared 150 GB volume: ~80 GB for Prometheus, the rest for Loki, Tempo and Grafana
+    retentionSize: 75GB
     resources:
       requests:
         cpu: 50m
@@ -38,7 +38,7 @@ prometheus:
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
-              storage: 50Gi
+              storage: 150Gi
 
 alertmanager:
   alertmanagerSpec:
