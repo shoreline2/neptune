@@ -207,13 +207,6 @@ resource "oci_containerengine_node_pool" "k8s_node_pool" {
     }
   }
 
-  # No surge: the A1 quota is fully used. Node changes cause downtime.
-  node_pool_cycling_details {
-    is_node_cycling_enabled = true
-    maximum_surge           = "0"
-    maximum_unavailable     = "1"
-  }
-
   # >50 GB boot volumes need the root FS grown. Custom user_data replaces OKE's
   # default, so the script must also run OKE's init.
   node_metadata = var.node_boot_volume_gbs > 50 ? {
