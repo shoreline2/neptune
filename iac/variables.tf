@@ -40,22 +40,21 @@ variable "availability_domain_index" {
 #   A1 compute:     2 OCPU / 12 GB RAM total   (node_count * ocpus / memory)
 #   Block storage:  200 GB total, boot volumes included. OCI PVCs are min 50 GB.
 #   Load balancer:  1 flexible LB @ 10 Mbps
-# The defaults below use all of the compute and 100 GB of block storage, leaving
-# room for two 50 GB block-volume PVCs (e.g. Prometheus + Elasticsearch).
+# Defaults: one node using all A1 compute. 150 GB left for PVCs.
 
 variable "node_count" {
-  type    = number
-  default = 2
-}
-
-variable "node_ocpus" {
   type    = number
   default = 1
 }
 
+variable "node_ocpus" {
+  type    = number
+  default = 2
+}
+
 variable "node_memory_gbs" {
   type    = number
-  default = 6
+  default = 12
 }
 
 variable "node_boot_volume_gbs" {
