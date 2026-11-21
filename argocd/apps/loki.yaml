@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - chart: loki
+      repoURL: https://grafana.github.io/helm-charts
+      targetRevision: 7.7.0
+      helm:
+        valueFiles:
+          - $values/k8s/observability/loki-values.yaml
+    - repoURL: 'https://github.com/shoreline2/neptune.git'
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true

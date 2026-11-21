@@ -1,0 +1,80 @@
+deploymentMode: SingleBinary
+
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  storage:
+    type: filesystem
+  schemaConfig:
+    configs:
+      - from: "2026-01-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+  # Loki has no size-based retention. Storage is bounded by rate x time:
+  # 0.1 MB/s uncompressed ~ 8.6 GB/day, ~1 GB/day after compression, ~25 GB over 30 days.
+  limits_config:
+    retention_period: 720h
+    ingestion_rate_mb: 0.1
+    ingestion_burst_size_mb: 2
+  compactor:
+    retention_enabled: true
+    delete_request_store: filesystem
+  # Every pod on the shared volume must use fsGroup 2000 (see values.yaml)
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 2000
+    fsGroupChangePolicy: OnRootMismatch
+
+singleBinary:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  # The chart can't use an existing PVC, so mount the shared volume directly
+  persistence:
+    enabled: false
+  extraVolumes:
+    - name: observability-data
+      persistentVolumeClaim:
+        claimName: observability-data-prometheus-prometheus-kube-prometheus-prometheus-0
+  extraVolumeMounts:
+    - name: observability-data
+      mountPath: /var/loki
+      subPath: loki
+
+sidecar:
+  rules:
+    enabled: false
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+
+# Scalable-mode components and defaults sized for large clusters (the chunks
+# cache alone requests 8 GiB)
+read:
+  replicas: 0
+write:
+  replicas: 0
+backend:
+  replicas: 0
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+lokiCanary:
+  enabled: false
+test:
+  enabled: false
+gateway:
+  enabled: false

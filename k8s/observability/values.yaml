@@ -1,6 +1,11 @@
 # Sizing: requests ~1.5x observed peak, memory limits ~2-3x. No CPU limits (avoids throttling).
 
 grafana:
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      uid: loki
+      url: http://loki.observability.svc:3100
   admin:
     # Manually created, see docs/grafana.md
     existingSecret: grafana-admin
@@ -36,6 +41,12 @@ grafana:
 
 prometheus:
   prometheusSpec:
+    # Pick up ServiceMonitors/PodMonitors/rules from every app, not just this chart's
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    scrapeConfigSelectorNilUsesHelmValues: false
     retention: 30d
     # Shared 150 GB volume budget: Prometheus 25, Loki 25, Tempo 25, Grafana 1 (GB)
     retentionSize: 25GB
