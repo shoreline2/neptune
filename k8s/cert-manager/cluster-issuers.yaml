@@ -1,0 +1,66 @@
+# DuckDNS holds only one TXT record per domain, so the apex and the wildcard
+# can't both use DNS-01 in the same order. The apex uses HTTP-01 through the
+# Gateway instead, and only the wildcard (which requires DNS-01) uses DuckDNS.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-staging-account
+    solvers:
+      - selector:
+          dnsNames:
+            - neptune-mgmt.duckdns.org
+        http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: main-gateway
+                namespace: default
+                kind: Gateway
+                sectionName: http
+      - selector:
+          dnsNames:
+            - "*.neptune-mgmt.duckdns.org"
+        dns01:
+          webhook:
+            groupName: acme.duckdns.org
+            solverName: duckdns
+            config:
+              apiTokenSecretRef:
+                name: duckdns-token
+                key: token
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-prod-account
+    solvers:
+      - selector:
+          dnsNames:
+            - neptune-mgmt.duckdns.org
+        http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: main-gateway
+                namespace: default
+                kind: Gateway
+                sectionName: http
+      - selector:
+          dnsNames:
+            - "*.neptune-mgmt.duckdns.org"
+        dns01:
+          webhook:
+            groupName: acme.duckdns.org
+            solverName: duckdns
+            config:
+              apiTokenSecretRef:
+                name: duckdns-token
+                key: token

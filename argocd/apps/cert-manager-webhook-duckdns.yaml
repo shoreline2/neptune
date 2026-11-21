@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager-webhook-duckdns
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    chart: cert-manager-webhook-duckdns
+    repoURL: oci://ghcr.io/cobexer/charts/cert-manager-webhook-duckdns
+    targetRevision: 2.0.0
+    helm:
+      values: |
+        # The token Secret is created by hand so it never lands in git (see docs/ddns.md)
+        secret:
+          existingSecret: true
+          existingSecretName: duckdns-token
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - SkipDryRunOnMissingResource=true
+    # cert-manager's CRDs may not exist yet on first sync
+    retry:
+      limit: 10
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
