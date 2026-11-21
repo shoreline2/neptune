@@ -9,6 +9,14 @@ grafana:
     enabled: true
     existingClaim: observability-data-prometheus-prometheus-kube-prometheus-prometheus-0
     subPath: grafana
+  # Every pod on the shared volume must use fsGroup 2000 (Prometheus's); a
+  # different fsGroup re-groups the whole volume on mount and locks others out
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 472
+    runAsGroup: 472
+    fsGroup: 2000
+    fsGroupChangePolicy: OnRootMismatch
   # SQLite on a shared volume: never run two Grafana pods at once
   deploymentStrategy:
     type: Recreate
@@ -31,6 +39,14 @@ prometheus:
     retention: 30d
     # Shared 150 GB volume budget: Prometheus 25, Loki 25, Tempo 25, Grafana 1 (GB)
     retentionSize: 25GB
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 2000
+      fsGroup: 2000
+      fsGroupChangePolicy: OnRootMismatch
+      seccompProfile:
+        type: RuntimeDefault
     resources:
       requests:
         cpu: 50m
