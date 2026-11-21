@@ -26,7 +26,37 @@ OKE creates the load balancer when Envoy Gateway creates the gateway's LoadBalan
    nslookup neptune-mgmt.duckdns.org
    ```
 
+## The DuckDNS token Secret
+
+The DuckDNS webhook for cert-manager (see `docs/tls.md`) needs the DuckDNS account token. The token is stored in a Kubernetes Secret that is created by hand, so the token is never committed to git. The Secret must exist before the first certificate can be issued, for example after the cluster is rebuilt.
+
+1. Copy the token from the top of the page at https://www.duckdns.org after signing in.
+
+2. Create the namespace if it does not exist yet. An "already exists" error is safe to ignore.
+
+   ```
+   kubectl create namespace cert-manager
+   ```
+
+3. Create the Secret. Replace `<token>` with the token from step 1.
+
+   ```
+   kubectl create secret generic duckdns-token -n cert-manager --from-literal=token=<token>
+   ```
+
+## Rotating the token
+
+DuckDNS can generate a new token from the account page. The old token stops working immediately, so the Secret must be replaced right away.
+
+1. Delete the old Secret.
+
+   ```
+   kubectl delete secret duckdns-token -n cert-manager
+   ```
+
+2. Create the Secret again with the new token, as in step 3 of "The DuckDNS token Secret".
+
 ## Gotchas
 
 - When a subdomain is created on duckdns.org, DuckDNS fills in the public IP of the browser that created it. That IP is not the gateway's IP, so the record must be updated before it will work.
-- Terraform does not create the load balancer, so `terraform output` cannot show its IP. The kubectl command in step 1 is the way to look it up.
+- Terraform does not create the load balancer, so `terraform output` cannot show its IP. The kubectl command in step 1 of "Updating the record" is the way to look it up.
