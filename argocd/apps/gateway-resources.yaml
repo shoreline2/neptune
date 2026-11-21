@@ -18,3 +18,12 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - SkipDryRunOnMissingResource=true
+    # The Certificate needs cert-manager's CRDs, which may not exist yet on first sync
+    retry:
+      limit: 10
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
