@@ -4,6 +4,14 @@ grafana:
   admin:
     # Manually created, see docs/grafana.md
     existingSecret: grafana-admin
+  # Dashboards saved in the UI live on the shared volume (created by Prometheus)
+  persistence:
+    enabled: true
+    existingClaim: observability-data-prometheus-prometheus-kube-prometheus-prometheus-0
+    subPath: grafana
+  # SQLite on a shared volume: never run two Grafana pods at once
+  deploymentStrategy:
+    type: Recreate
   resources:
     requests:
       cpu: 25m
