@@ -9,4 +9,15 @@ spec:
     kubernetes:
       envoyDeployment:
         container:
+          # OKE's CRI-O rejects short image names; always fully qualify (docker.io/...)
           image: docker.io/envoyproxy/envoy:distroless-v1.31.0
+      envoyService:
+        # These must live here (not on the Gateway's metadata) to reach the
+        # generated LoadBalancer Service.
+        annotations:
+          # Always Free: exactly one flexible LB at 10 Mbps
+          service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
+          service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
+          service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "10"
+          # Security lists are owned by Terraform (iac/main.tf)
+          service.beta.kubernetes.io/oci-load-balancer-security-list-management-mode: "None"
