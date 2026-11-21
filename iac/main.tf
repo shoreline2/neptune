@@ -1,30 +1,42 @@
-# Fetch Availability Domains
 data "oci_identity_availability_domains" "ads" {
   compartment_id = var.compartment_ocid
 }
 
-# Fetch supported OKE node pool images
 data "oci_containerengine_node_pool_option" "oke" {
   node_pool_option_id = "all"
   compartment_id      = var.compartment_ocid
 }
 
-# VCN
+locals {
+  # Image must match the cluster version. Names embed the build date, so the last sorted match is newest.
+  oke_version_tag = "OKE-${trimprefix(var.kubernetes_version, "v")}-"
+  node_images = {
+    for s in data.oci_containerengine_node_pool_option.oke.sources : s.source_name => s.image_id
+    if startswith(s.source_name, "Oracle-Linux-9") &&
+    strcontains(s.source_name, "aarch64") &&
+    !strcontains(s.source_name, "GPU") &&
+    strcontains(s.source_name, local.oke_version_tag)
+  }
+  node_image_name = element(sort(keys(local.node_images)), length(local.node_images) - 1)
+  node_image_id   = local.node_images[local.node_image_name]
+
+  vcn_cidr = "10.0.0.0/16"
+}
+
 resource "oci_core_vcn" "main" {
   compartment_id = var.compartment_ocid
-  cidr_blocks    = ["10.0.0.0/16"]
+  cidr_blocks    = [local.vcn_cidr]
   display_name   = "${var.prefix}-vcn"
   dns_label      = "${var.prefix}vcn"
 }
 
-# Internet Gateway
 resource "oci_core_internet_gateway" "main" {
   compartment_id = var.compartment_ocid
   vcn_id         = oci_core_vcn.main.id
   display_name   = "${var.prefix}-ig"
 }
 
-# Route Table
+# No NAT gateway on free tier, so nodes sit in a public subnet.
 resource "oci_core_route_table" "main" {
   compartment_id = var.compartment_ocid
   vcn_id         = oci_core_vcn.main.id
@@ -37,74 +49,122 @@ resource "oci_core_route_table" "main" {
   }
 }
 
-# Security List for Worker Nodes & API Server
-resource "oci_core_security_list" "main" {
+resource "oci_core_security_list" "nodes" {
   compartment_id = var.compartment_ocid
   vcn_id         = oci_core_vcn.main.id
-  display_name   = "${var.prefix}-security-list"
+  display_name   = "${var.prefix}-nodes-sl"
 
-  # Outbound traffic to anywhere
   egress_security_rules {
     destination = "0.0.0.0/0"
     protocol    = "all"
   }
 
-  # Inbound SSH access
-  ingress_security_rules {
-    protocol = "6" # TCP
-    source   = "0.0.0.0/0"
-    tcp_options {
-      min = 22
-      max = 22
-    }
-  }
-
-  # Inbound Kubernetes API access (Port 6443)
-  ingress_security_rules {
-    protocol = "6" # TCP
-    source   = "0.0.0.0/0"
-    tcp_options {
-      min = 6443
-      max = 6443
-    }
-  }
-
-  # Internal communication within VCN
   ingress_security_rules {
     protocol = "all"
-    source   = "10.0.0.0/16"
+    source   = local.vcn_cidr
+  }
+
+  ingress_security_rules {
+    protocol = "1"
+    source   = "0.0.0.0/0"
+    icmp_options {
+      type = 3
+      code = 4
+    }
+  }
+
+  dynamic "ingress_security_rules" {
+    for_each = var.admin_cidrs
+    content {
+      description = "kubectl from admin"
+      protocol    = "6"
+      source      = ingress_security_rules.value
+      tcp_options {
+        min = 6443
+        max = 6443
+      }
+    }
+  }
+
+  dynamic "ingress_security_rules" {
+    for_each = var.admin_cidrs
+    content {
+      description = "SSH from admin"
+      protocol    = "6"
+      source      = ingress_security_rules.value
+      tcp_options {
+        min = 22
+        max = 22
+      }
+    }
   }
 }
 
-# Subnet 1: For Worker Nodes & Cluster API Endpoint
+# LoadBalancer Services must set security-list-management-mode "None", or OKE's
+# cloud controller edits these lists and the next apply reverts it.
+resource "oci_core_security_list" "lb" {
+  compartment_id = var.compartment_ocid
+  vcn_id         = oci_core_vcn.main.id
+  display_name   = "${var.prefix}-lb-sl"
+
+  egress_security_rules {
+    destination = local.vcn_cidr
+    protocol    = "6"
+  }
+
+  ingress_security_rules {
+    protocol = "1"
+    source   = "0.0.0.0/0"
+    icmp_options {
+      type = 3
+      code = 4
+    }
+  }
+
+  dynamic "ingress_security_rules" {
+    for_each = [80, 443]
+    content {
+      protocol = "6"
+      source   = "0.0.0.0/0"
+      tcp_options {
+        min = ingress_security_rules.value
+        max = ingress_security_rules.value
+      }
+    }
+  }
+}
+
 resource "oci_core_subnet" "nodes" {
   compartment_id    = var.compartment_ocid
   vcn_id            = oci_core_vcn.main.id
   cidr_block        = "10.0.1.0/24"
   display_name      = "${var.prefix}-nodes-subnet"
   route_table_id    = oci_core_route_table.main.id
-  security_list_ids = [oci_core_security_list.main.id]
+  security_list_ids = [oci_core_security_list.nodes.id]
   dns_label         = "${var.prefix}nodes"
 }
 
-# Subnet 2: Dedicated strictly for OKE Load Balancers
 resource "oci_core_subnet" "lb" {
   compartment_id    = var.compartment_ocid
   vcn_id            = oci_core_vcn.main.id
   cidr_block        = "10.0.2.0/24"
   display_name      = "${var.prefix}-lb-subnet"
   route_table_id    = oci_core_route_table.main.id
-  security_list_ids = [oci_core_security_list.main.id]
+  security_list_ids = [oci_core_security_list.lb.id]
   dns_label         = "${var.prefix}lb"
 }
 
-# Managed OKE Basic Cluster (Control Plane is $0 / Free)
+# BASIC is free; ENHANCED is billed hourly.
 resource "oci_containerengine_cluster" "k8s_cluster" {
   compartment_id     = var.compartment_ocid
-  kubernetes_version = "v1.36.1" # Adjust to your desired supported K8s version
+  kubernetes_version = var.kubernetes_version
   name               = "${var.prefix}-oke-cluster"
   vcn_id             = oci_core_vcn.main.id
-  type               = "BASIC_CLUSTER" # Basic cluster is free
+  type               = "BASIC_CLUSTER"
+
+  cluster_pod_network_options {
+    cni_type = "FLANNEL_OVERLAY"
+  }
 
   endpoint_config {
     is_public_ip_enabled = true
@@ -112,17 +172,10 @@ resource "oci_containerengine_cluster" "k8s_cluster" {
   }
 
   options {
-    # Uses dedicated Load Balancer subnet
     service_lb_subnet_ids = [oci_core_subnet.lb.id]
-
-    add_ons {
-      is_kubernetes_dashboard_enabled = false
-      is_tiller_enabled               = false
-    }
   }
 }
 
-# Managed Worker Node Pool
 resource "oci_containerengine_node_pool" "k8s_node_pool" {
   cluster_id         = oci_containerengine_cluster.k8s_cluster.id
   compartment_id     = var.compartment_ocid
@@ -131,28 +184,42 @@ resource "oci_containerengine_node_pool" "k8s_node_pool" {
   node_shape         = "VM.Standard.A1.Flex"
 
   node_shape_config {
-    ocpus         = 1
-    memory_in_gbs = 6
+    ocpus         = var.node_ocpus
+    memory_in_gbs = var.node_memory_gbs
   }
 
   node_source_details {
-    image_id    = element([for img in data.oci_containerengine_node_pool_option.oke.sources : img.image_id if length(regexall("aarch64", img.source_name)) > 0], 0)
-    source_type = "IMAGE"
-    boot_volume_size_in_gbs = 50
+    source_type             = "IMAGE"
+    image_id                = local.node_image_id
+    boot_volume_size_in_gbs = var.node_boot_volume_gbs
   }
 
   node_config_details {
-    size = 2
+    size = var.node_count
+
     placement_configs {
-      availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
+      availability_domain = data.oci_identity_availability_domains.ads.availability_domains[var.availability_domain_index].name
       subnet_id           = oci_core_subnet.nodes.id
+    }
+
+    node_pool_pod_network_option_details {
+      cni_type = "FLANNEL_OVERLAY"
     }
   }
 
-  ssh_public_key = file(var.ssh_public_key_path)
+  # Boot volumes over 50 GB aren't usable until the root FS is grown. Custom
+  # user_data replaces OKE's default, so it must run the OKE init script itself.
+  node_metadata = var.node_boot_volume_gbs > 50 ? {
+    user_data = filebase64("${path.module}/scripts/node-init.sh")
+  } : {}
+
+  ssh_public_key = file(pathexpand(var.ssh_public_key_path))
 }
 
-# Command helper to easily fetch your local kubeconfig
+output "node_image" {
+  value = local.node_image_name
+}
+
 output "kubeconfig_command" {
   value = "oci ce cluster create-kubeconfig --cluster-id ${oci_containerengine_cluster.k8s_cluster.id} --file ~/.kube/config --region ${var.region} --token-version 2.0.0 --kube-endpoint PUBLIC_ENDPOINT"
 }

@@ -1,6 +1,7 @@
 # Local Terraform state & history
 *.tfstate
 *.tfstate.*
+*.tfplan
 crash.log
 crash.*.log
 
