@@ -22,6 +22,26 @@ spec:
           enableGatewayAPI: true
         # Recommended by the DuckDNS webhook for the DNS-01 self check
         dns01RecursiveNameservers: "1.1.1.1:53,8.8.8.8:53"
+        resources:
+          requests:
+            cpu: 10m
+            memory: 96Mi
+          limits:
+            memory: 192Mi
+        webhook:
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 96Mi
+        cainjector:
+          resources:
+            requests:
+              cpu: 10m
+              memory: 96Mi
+            limits:
+              memory: 192Mi
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager

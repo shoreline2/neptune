@@ -1,4 +1,86 @@
+# Sizing: requests ~1.5x observed peak, memory limits ~2-3x. No CPU limits (avoids throttling).
+
 grafana:
   admin:
     # Manually created, see docs/grafana.md
     existingSecret: grafana-admin
+  resources:
+    requests:
+      cpu: 25m
+      memory: 384Mi
+    limits:
+      memory: 768Mi
+  sidecar:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 96Mi
+      limits:
+        memory: 192Mi
+
+prometheus:
+  prometheusSpec:
+    retention: 30d
+    # Shares the volume with other apps, so cap well below 50 GB
+    retentionSize: 22GB
+    resources:
+      requests:
+        cpu: 50m
+        memory: 512Mi
+      limits:
+        memory: 1536Mi
+    storageSpec:
+      volumeClaimTemplate:
+        metadata:
+          # Shared by the observability stack (subPaths). PVC name: observability-data-prometheus-prometheus-kube-prometheus-prometheus-0
+          name: observability-data
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 96Mi
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 192Mi
+  admissionWebhooks:
+    # Replaces the create/patch hook Jobs, which keep Argo OutOfSync
+    certManager:
+      enabled: true
+
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 96Mi
+
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
+# OKE runs these off-cluster (no endpoints); scraping them only fires *Down alerts
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeEtcd:
+  enabled: false

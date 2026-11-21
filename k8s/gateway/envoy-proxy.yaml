@@ -11,6 +11,13 @@ spec:
         container:
           # OKE's CRI-O rejects short image names; always fully qualify (docker.io/...)
           image: docker.io/envoyproxy/envoy:distroless-v1.31.0
+          # Default request is 512Mi; actual use is ~25Mi
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
       envoyService:
         # These must live here (not on the Gateway's metadata) to reach the
         # generated LoadBalancer Service.
