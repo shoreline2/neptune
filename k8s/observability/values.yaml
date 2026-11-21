@@ -21,8 +21,8 @@ grafana:
 prometheus:
   prometheusSpec:
     retention: 30d
-    # Shared 150 GB volume: ~80 GB for Prometheus, the rest for Loki, Tempo and Grafana
-    retentionSize: 75GB
+    # Shared 150 GB volume budget: Prometheus 25, Loki 25, Tempo 25, Grafana 1 (GB)
+    retentionSize: 25GB
     resources:
       requests:
         cpu: 50m
