@@ -1,0 +1,20 @@
+# Credentials come from the hand-made operator-oauth Secret (see docs/tailscale.md)
+oauthSecretVolume:
+  secret:
+    secretName: operator-oauth
+
+operatorConfig:
+  hostname: neptune-k8s-operator
+  # OKE's CRI-O rejects short image names
+  image:
+    repository: docker.io/tailscale/k8s-operator
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+proxyConfig:
+  image:
+    repository: docker.io/tailscale/tailscale

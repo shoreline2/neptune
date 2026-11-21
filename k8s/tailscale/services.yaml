@@ -1,0 +1,79 @@
+# Tailnet-only access. Nothing here is reachable from the internet.
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyClass
+metadata:
+  name: default
+spec:
+  statefulSet:
+    pod:
+      tailscaleContainer:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+---
+# Home devices remote-write metrics to http://neptune-prometheus:9090/api/v1/write
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-tailnet
+  namespace: observability
+  annotations:
+    tailscale.com/hostname: neptune-prometheus
+  labels:
+    tailscale.com/proxy-class: default
+spec:
+  type: LoadBalancer
+  loadBalancerClass: tailscale
+  selector:
+    app.kubernetes.io/name: prometheus
+    operator.prometheus.io/name: prometheus-kube-prometheus-prometheus
+  ports:
+    - name: http
+      port: 9090
+      targetPort: 9090
+---
+# Home devices push logs to http://neptune-loki:3100/loki/api/v1/push
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki-tailnet
+  namespace: observability
+  annotations:
+    tailscale.com/hostname: neptune-loki
+  labels:
+    tailscale.com/proxy-class: default
+spec:
+  type: LoadBalancer
+  loadBalancerClass: tailscale
+  selector:
+    app.kubernetes.io/component: single-binary
+    app.kubernetes.io/instance: loki
+    app.kubernetes.io/name: loki
+  ports:
+    - name: http
+      port: 3100
+      targetPort: 3100
+---
+# Grafana UI at http://neptune-grafana
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-tailnet
+  namespace: observability
+  annotations:
+    tailscale.com/hostname: neptune-grafana
+  labels:
+    tailscale.com/proxy-class: default
+spec:
+  type: LoadBalancer
+  loadBalancerClass: tailscale
+  selector:
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/name: grafana
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
