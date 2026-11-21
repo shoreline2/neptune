@@ -47,6 +47,8 @@ prometheus:
     ruleSelectorNilUsesHelmValues: false
     probeSelectorNilUsesHelmValues: false
     scrapeConfigSelectorNilUsesHelmValues: false
+    # Home devices push metrics here (reachable only over Tailscale)
+    enableRemoteWriteReceiver: true
     retention: 30d
     # Shared 150 GB volume budget: Prometheus 25, Loki 25, Tempo 25, Grafana 1 (GB)
     retentionSize: 25GB
