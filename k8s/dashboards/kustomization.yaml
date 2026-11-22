@@ -1,0 +1,12 @@
+# Dashboards are loaded by Grafana's sidecar from ConfigMaps labeled grafana_dashboard
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: observability
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    grafana_dashboard: "1"
+configMapGenerator:
+  - name: dashboard-node-exporter-full
+    files:
+      - node-exporter-full.json

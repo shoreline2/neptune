@@ -121,3 +121,18 @@ kubeScheduler:
   enabled: false
 kubeEtcd:
   enabled: false
+
+additionalPrometheusRulesMap:
+  home-devices:
+    groups:
+      - name: home-devices
+        rules:
+          # Home devices push metrics, so a dead device goes silent instead of reporting up == 0.
+          # Fires for any host seen in the last 7 days that has stopped sending.
+          - alert: HomeDeviceNotReporting
+            expr: count by (instance) (last_over_time(up{job="node"}[7d])) unless count by (instance) (up{job="node"})
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "{{ $labels.instance }} has stopped sending metrics"
