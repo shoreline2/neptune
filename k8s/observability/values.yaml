@@ -9,6 +9,12 @@ grafana:
   admin:
     # Manually created, see docs/grafana.md
     existingSecret: grafana-admin
+  # No login needed: Grafana is only reachable over the tailnet. Anonymous users
+  # are org Admins; server-admin tasks still need the admin login at /login.
+  grafana.ini:
+    auth.anonymous:
+      enabled: true
+      org_role: Admin
   # Dashboards saved in the UI live on the shared volume (created by Prometheus)
   persistence:
     enabled: true
