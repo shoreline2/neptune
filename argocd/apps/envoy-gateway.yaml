@@ -26,6 +26,16 @@ spec:
                 memory: 64Mi
               limits:
                 memory: 256Mi
+        # The certgen Job's RBAC is a pre-sync hook. Delete it once the Job
+        # succeeds, so it doesn't linger in Argo as "requires pruning".
+        certgen:
+          rbac:
+            annotations:
+              helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+        # Labels proxy pods with their zone for zone-aware routing; pointless on
+        # one node in one AD. Its webhook is also a lingering pre-sync hook.
+        topologyInjector:
+          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: envoy-gateway-system
