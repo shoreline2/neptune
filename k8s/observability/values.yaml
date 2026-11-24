@@ -165,3 +165,14 @@ additionalPrometheusRulesMap:
               severity: warning
             annotations:
               summary: "{{ $labels.instance }} has stopped sending metrics"
+  loki:
+    groups:
+      - name: loki
+        rules:
+          # Loki rejected log lines (rate limits, too old, etc.); Alloy may retry, but these are lost
+          - alert: LokiDroppingLogs
+            expr: sum by (reason) (increase(loki_discarded_samples_total[10m])) > 0
+            labels:
+              severity: warning
+            annotations:
+              summary: "Loki dropped {{ $value | humanize }} log lines in 10m (reason: {{ $labels.reason }})"
