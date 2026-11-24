@@ -18,13 +18,13 @@ spec:
           enabled: true
         deployment:
           envoyGateway:
-            # Chart default (256Mi request / 1Gi limit) is far above actual use
+            # Chart default (256Mi request / 1Gi limit) is far above actual use.
+            # The chart sets no CPU limit; don't add `cpu: null` (renders as 0).
             resources:
               requests:
                 cpu: 10m
                 memory: 64Mi
               limits:
-                cpu: null
                 memory: 256Mi
   destination:
     server: https://kubernetes.default.svc
