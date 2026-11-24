@@ -77,3 +77,23 @@ spec:
     - name: http
       port: 80
       targetPort: 3000
+---
+# Argo CD UI at https://neptune-argocd (self-signed cert: expect a browser warning)
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-tailnet
+  namespace: argocd
+  annotations:
+    tailscale.com/hostname: neptune-argocd
+  labels:
+    tailscale.com/proxy-class: default
+spec:
+  type: LoadBalancer
+  loadBalancerClass: tailscale
+  selector:
+    app.kubernetes.io/name: argocd-server
+  ports:
+    - name: https
+      port: 443
+      targetPort: 8080
