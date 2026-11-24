@@ -10,11 +10,12 @@ spec:
   source:
     chart: envoy-gateway
     repoURL: oci://docker.io/envoyproxy/gateway-helm
-    targetRevision: v1.1.0
+    targetRevision: v1.10.0
     helm:
       values: |
-        gatewayAPI:
-          installCRDs: true
+        # Installs the Envoy Gateway and Gateway API CRDs (experimental channel)
+        crds:
+          enabled: true
         deployment:
           envoyGateway:
             # Chart default (256Mi request / 1Gi limit) is far above actual use

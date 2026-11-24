@@ -9,8 +9,8 @@ spec:
     kubernetes:
       envoyDeployment:
         container:
-          # OKE's CRI-O rejects short image names; always fully qualify (docker.io/...)
-          image: docker.io/envoyproxy/envoy:distroless-v1.31.0
+          # No image pin: the default matches the Envoy Gateway version and is
+          # fully qualified (OKE's CRI-O rejects short image names).
           # Default request is 512Mi; actual use is ~25Mi
           resources:
             requests:
