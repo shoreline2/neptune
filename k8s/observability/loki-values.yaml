@@ -15,12 +15,14 @@ loki:
         index:
           prefix: index_
           period: 24h
-  # Loki has no size-based retention. Storage is bounded by rate x time:
-  # 0.1 MB/s uncompressed ~ 8.6 GB/day, ~1 GB/day after compression, ~25 GB over 30 days.
+  # Loki has no size-based retention, so these limits are a runaway guard, not a
+  # budget. Normal ingest is ~2 KB/s (~20 MB/day compressed); the burst covers
+  # catch-up after a home device reconnects (2 MB dropped ~80k lines in Nov 2026).
+  # Watch disk use with KubePersistentVolumeFillingUp instead.
   limits_config:
     retention_period: 720h
-    ingestion_rate_mb: 0.1
-    ingestion_burst_size_mb: 2
+    ingestion_rate_mb: 1
+    ingestion_burst_size_mb: 32
   compactor:
     retention_enabled: true
     delete_request_store: filesystem
