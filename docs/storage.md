@@ -19,7 +19,7 @@ With `Retain`, deleting the PVC leaves the PV in the `Released` state and the vo
 List the backups:
 
 ```
-oci bv backup list --volume-id <volume-ocid> --query 'data[].{name:"display-name",state:"lifecycle-state",created:"time-created"}' --output table
+oci bv backup list --compartment-id <compartment-ocid> --volume-id <volume-ocid> --query 'data[].{name:"display-name",state:"lifecycle-state",created:"time-created"}' --output table
 ```
 
 ## Restoring from a backup
