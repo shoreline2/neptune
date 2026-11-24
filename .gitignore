@@ -18,7 +18,6 @@ override.tf.json
 
 # CLI & Local Execution Artifacts
 .terraform.lock.hcl.bak
-manual-argo-install.md
 
 # General OS & Editor metadata
 .DS_Store
