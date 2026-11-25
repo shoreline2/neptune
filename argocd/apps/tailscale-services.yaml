@@ -17,3 +17,11 @@ spec:
   syncPolicy:
     syncOptions:
       - SkipDryRunOnMissingResource=true
+      - RespectIgnoreDifferences=true
+  # The operator rewrites egress Services' externalName; a sync must not reset it
+  ignoreDifferences:
+    - kind: Service
+      name: tyler-precision-tower-k8s
+      namespace: argocd
+      jsonPointers:
+        - /spec/externalName

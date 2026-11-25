@@ -7,6 +7,9 @@ The Tailscale Kubernetes operator puts selected Services on the tailnet. Nothing
 | `neptune-prometheus` | Prometheus, port 9090 | Home devices remote-write metrics to `/api/v1/write` |
 | `neptune-loki` | Loki, port 3100 | Home devices push logs to `/loki/api/v1/push` |
 | `neptune-grafana` | Grafana, port 80 | Grafana UI |
+| `neptune-argocd` | Argo CD, port 443 | Argo CD UI |
+
+One Service goes the other way. The egress Service `argocd/tyler-precision-tower-k8s` lets Argo CD reach the tower's API server proxy (see `tyler-precision-tower.md`).
 
 The operator authenticates with an OAuth client. Its credentials are stored in a Secret that is created by hand, so they are never committed to git.
 
@@ -37,7 +40,7 @@ The operator authenticates with an OAuth client. Its credentials are stored in a
 
 5. In Argo CD, sync `root-app`, then `tailscale-operator`, then `tailscale-services`.
 
-6. Check that the operator and the three proxies joined the tailnet. They appear in the admin console as `neptune-k8s-operator`, `neptune-prometheus`, `neptune-loki`, and `neptune-grafana`.
+6. Check that the operator and the four proxies joined the tailnet. They appear in the admin console as `neptune-k8s-operator`, `neptune-prometheus`, `neptune-loki`, `neptune-grafana`, and `neptune-argocd`.
 
 ## Gotchas
 

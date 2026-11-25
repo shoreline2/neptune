@@ -97,3 +97,23 @@ spec:
     - name: https
       port: 443
       targetPort: 8080
+---
+# Egress: Argo CD reaches tyler-precision-tower's API server proxy through here
+apiVersion: v1
+kind: Service
+metadata:
+  name: tyler-precision-tower-k8s
+  namespace: argocd
+  annotations:
+    tailscale.com/tailnet-fqdn: tyler-precision-tower-k8s-operator.tail78f700.ts.net
+    # The tailnet policy grants tag:argocd (not tag:k8s) access to the tower's API
+    tailscale.com/tags: tag:argocd
+  labels:
+    tailscale.com/proxy-class: default
+spec:
+  type: ExternalName
+  externalName: placeholder # the operator replaces this with its proxy's Service
+  ports:
+    - name: https
+      port: 443
+      protocol: TCP
