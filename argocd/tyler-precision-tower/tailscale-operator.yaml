@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tower-tailscale-operator
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - chart: tailscale-operator
+      repoURL: https://pkgs.tailscale.com/helmcharts
+      targetRevision: 1.104.7
+      helm:
+        releaseName: tailscale-operator
+        valueFiles:
+          - $values/k8s/tyler-precision-tower/tailscale-operator-values.yaml
+    - repoURL: 'https://github.com/shoreline2/neptune.git'
+      targetRevision: HEAD
+      ref: values
+      path: k8s/tyler-precision-tower/rbac
+  destination:
+    name: tyler-precision-tower
+    namespace: tailscale
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

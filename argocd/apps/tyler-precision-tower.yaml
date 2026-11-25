@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tyler-precision-tower
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/shoreline2/neptune.git'
+    targetRevision: HEAD
+    path: argocd/tyler-precision-tower
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd

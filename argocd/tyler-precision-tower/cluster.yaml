@@ -1,0 +1,15 @@
+# No credentials: the tower's API server proxy authenticates the tailnet identity
+# of the tyler-precision-tower-k8s egress proxy (see docs/tyler-precision-tower.md).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cluster-tyler-precision-tower
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: cluster
+stringData:
+  name: tyler-precision-tower
+  server: https://tyler-precision-tower-k8s.argocd.svc
+  # The egress Service name doesn't match the proxy's Let's Encrypt cert
+  config: |
+    {"tlsClientConfig": {"serverName": "tyler-precision-tower-k8s-operator.tail78f700.ts.net"}}

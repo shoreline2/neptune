@@ -1,0 +1,17 @@
+# Credentials come from the hand-made operator-oauth Secret (see docs/tyler-precision-tower.md)
+oauthSecretVolume:
+  secret:
+    secretName: operator-oauth
+
+operatorConfig:
+  hostname: tyler-precision-tower-k8s-operator
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+# Auth mode: requests are impersonated as the groups the tailnet policy grants
+apiServerProxyConfig:
+  mode: "true"
